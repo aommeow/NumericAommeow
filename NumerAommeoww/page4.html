@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secant Method</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <h1>Secant Method Calculator</h1>
+    <label for="x0">Starting Point X0:</label>
+    <input type="number" id="x0" required><br><br>
+    
+    <label for="x1">Starting Point X1:</label>
+    <input type="number" id="x1" required><br><br>
+    
+    <label for="tolerance">Tolerance:</label>
+    <input type="number" id="tolerance" step="0.0001" required><br><br>
+    
+    <label for="maxIterations">MaxIteration:</label>
+    <input type="number" id="maxIterations" required><br><br>
+    
+    <button onclick="calculate()">Calculate</button>
+    
+    <h2 id="result"></h2>
+
+    <script>
+        // ฟังก์ชันที่เราต้องการหาค่าราก
+        function f(x) {
+            return x * x - 4; // ตัวอย่างฟังก์ชัน f(x) = x^2 - 4
+        }
+
+        // ฟังก์ชัน Secant Method
+        function secantMethod(x0, x1, tolerance, maxIterations) {
+            let iteration = 0;
+            let x2;
+
+            while (iteration < maxIterations) {
+                // คำนวณ x2 โดยใช้ Secant Method
+                x2 = x1 - (f(x1) * (x1 - x0)) / (f(x1) - f(x0));
+
+                // เช็คว่าจุด x2 เป็นรากหรือว่าเราถึงความแม่นยำที่ต้องการแล้ว
+                if (Math.abs(f(x2)) < tolerance) {
+                    return x2; // พบราก
+                }
+
+                // อัพเดทค่า x0 และ x1
+                x0 = x1;
+                x1 = x2;
+
+                iteration++;
+            }
+
+            return x2; // คืนค่าจุด x2 หากถึงจำนวนรอบสูงสุด
+        }
+
+        // ฟังก์ชันเพื่อให้ผู้ใช้กรอกข้อมูลและคำนวณผลลัพธ์
+        function calculate() {
+            const x0 = parseFloat(document.getElementById('x0').value);
+            const x1 = parseFloat(document.getElementById('x1').value);
+            const tolerance = parseFloat(document.getElementById('tolerance').value);
+            const maxIterations = parseInt(document.getElementById('maxIterations').value);
+
+            const result = secantMethod(x0, x1, tolerance, maxIterations);
+
+            document.getElementById('result').innerText = `Root: ${result}`;
+        }
+    </script>
+</body>
+</html>

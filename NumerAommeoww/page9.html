@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Matrix Inversion Method Calculator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+        }
+        table {
+            margin: 20px 0;
+            border-collapse: collapse;
+        }
+        table, th, td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>Matrix Inversion Method Calculator</h1>
+
+    <label for="matrixSize">Please select a matrix:</label>
+    <select id="matrixSize" onchange="changeMatrixSize()">
+        <option value="2">2x2</option>
+        <option value="3">3x3</option>
+        <option value="4">4x4</option>
+        <option value="5">5x5</option>
+    </select>
+
+    <div id="matrixContainer">
+        <h3>Complete the system of linear equations (Ax = B)</h3>
+        <table id="matrixTable"></table>
+    </div>
+
+    <button onclick="calculate()">Calculate</button>
+    
+    <h2 id="result"></h2>
+
+    <script>
+        function changeMatrixSize() {
+            const size = parseInt(document.getElementById('matrixSize').value);
+            const matrixTable = document.getElementById('matrixTable');
+            matrixTable.innerHTML = ''; // ล้างตารางก่อน
+            let tableHTML = '<tr><th colspan="' + size + '">A Matrix</th><th>B</th></tr>';
+            for (let i = 0; i < size; i++) {
+                tableHTML += '<tr>';
+                for (let j = 0; j < size; j++) {
+                    tableHTML += `<td><input type="number" required id="A${i}${j}"></td>`;
+                }
+                tableHTML += `<td><input type="number" required id="B${i}"></td>`;
+                tableHTML += '</tr>';
+            }
+            matrixTable.innerHTML = tableHTML;
+        }
+
+        function calculate() {
+            const size = parseInt(document.getElementById('matrixSize').value);
+            const A = [];
+            const B = [];
+
+            // เก็บค่าจากฟิลด์ input
+            for (let i = 0; i < size; i++) {
+                A[i] = [];
+                for (let j = 0; j < size; j++) {
+                    A[i][j] = parseFloat(document.getElementById(`A${i}${j}`).value);
+                }
+                B[i] = parseFloat(document.getElementById(`B${i}`).value);
+            }
+
+            // หาค่าอินเวอร์สของเมทริกซ์ A
+            const inverseA = invertMatrix(A);
+            if (!inverseA) {
+                document.getElementById('result').innerText = 'Unable to find the inverse of the matrix.';
+                return;
+            }
+
+            // คำนวณผลลัพธ์ x = A^-1 * B
+            const result = multiplyMatrixVector(inverseA, B);
+
+            // แสดงผลลัพธ์
+            let resultText = 'Result: ';
+            if (size === 2) {
+                resultText += `x = ${result[0].toFixed(2)}, y = ${result[1].toFixed(2)}`;
+            } else if (size === 3) {
+                resultText += `x = ${result[0].toFixed(2)}, y = ${result[1].toFixed(2)}, z = ${result[2].toFixed(2)}`;
+            } else {
+                for (let i = 0; i < result.length; i++) {
+                    resultText += `x${i + 1} = ${result[i].toFixed(2)}; `;
+                }
+            }
+            document.getElementById('result').innerText = resultText;
+        }
+
+        // ฟังก์ชันสำหรับคำนวณอินเวอร์สของเมทริกซ์
+        function invertMatrix(matrix) {
+            const size = matrix.length;
+            const augmented = matrix.map((row, i) => [...row, ...Array.from({ length: size }, (_, j) => (i === j ? 1 : 0))]);
+
+            for (let i = 0; i < size; i++) {
+                let maxRow = i;
+                for (let j = i + 1; j < size; j++) {
+                    if (Math.abs(augmented[j][i]) > Math.abs(augmented[maxRow][i])) maxRow = j;
+                }
+                [augmented[i], augmented[maxRow]] = [augmented[maxRow], augmented[i]];
+
+                const divisor = augmented[i][i];
+                if (divisor === 0) return null; // ไม่มีอินเวอร์ส
+
+                for (let j = 0; j < 2 * size; j++) augmented[i][j] /= divisor;
+
+                for (let j = 0; j < size; j++) {
+                    if (j !== i) {
+                        const factor = augmented[j][i];
+                        for (let k = 0; k < 2 * size; k++) augmented[j][k] -= factor * augmented[i][k];
+                    }
+                }
+            }
+
+            return augmented.map(row => row.slice(size));
+        }
+
+        // ฟังก์ชันสำหรับคูณเมทริกซ์กับเวกเตอร์
+        function multiplyMatrixVector(matrix, vector) {
+            return matrix.map(row => row.reduce((sum, val, i) => sum + val * vector[i], 0));
+        }
+
+        // เริ่มต้นด้วยระบบสมการขนาด 2x2
+        changeMatrixSize();
+    </script>
+</body>
+</html>

@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Newton Interpolating Polynomial</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+        }
+        table {
+            margin: 20px 0;
+            border-collapse: collapse;
+            width: 100%;
+        }
+        table, th, td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: center;
+        }
+        #chartContainer {
+            width: 700px; /* ความกว้างของกราฟ */
+            height: 400px; /* ความสูงของกราฟ */
+            margin-top: 20px;
+        }
+        canvas {
+            max-width: 100%;
+            max-height: 100%;
+        }
+    </style>
+</head>
+<body>
+    <h1>Newton Interpolating Polynomial</h1>
+
+    <label for="numPoints">Data Point:</label>
+    <input type="number" id="numPoints" min="2" value="3" onchange="createInputFields()">
+    
+    <div id="pointsContainer">
+        <h3>Complete x and y:</h3>
+        <table id="pointsTable"></table>
+    </div>
+
+    <button onclick="calculateNewtonPolynomial()">Calculate</button>
+    
+    <h2 id="polynomial"></h2>
+    <div id="resultTableContainer"></div>
+
+    <div id="chartContainer">
+        <canvas id="chartCanvas"></canvas>
+    </div>
+
+    <script>
+        let chart; // ตัวแปรสำหรับเก็บ Chart.js instance
+
+        function createInputFields() {
+            const numPoints = parseInt(document.getElementById("numPoints").value);
+            const pointsTable = document.getElementById("pointsTable");
+            pointsTable.innerHTML = "<tr><th>x</th><th>y</th></tr>";
+            for (let i = 0; i < numPoints; i++) {
+                pointsTable.innerHTML += `
+                    <tr>
+                        <td><input type="number" id="x${i}" required></td>
+                        <td><input type="number" id="y${i}" required></td>
+                    </tr>
+                `;
+            }
+        }
+
+        function calculateNewtonPolynomial() {
+            const numPoints = parseInt(document.getElementById("numPoints").value);
+            const xValues = [];
+            const yValues = [];
+
+            for (let i = 0; i < numPoints; i++) {
+                xValues.push(parseFloat(document.getElementById(`x${i}`).value));
+                yValues.push(parseFloat(document.getElementById(`y${i}`).value));
+            }
+
+            // คำนวณค่า Divided Differences
+            const dividedDifferences = Array.from({ length: numPoints }, () => Array(numPoints).fill(0));
+            for (let i = 0; i < numPoints; i++) {
+                dividedDifferences[i][0] = yValues[i];
+            }
+            for (let j = 1; j < numPoints; j++) {
+                for (let i = 0; i < numPoints - j; i++) {
+                    dividedDifferences[i][j] = (dividedDifferences[i + 1][j - 1] - dividedDifferences[i][j - 1]) / (xValues[i + j] - xValues[i]);
+                }
+            }
+
+            // แสดงตาราง Divided Differences
+            let tableHTML = "<h3>Divided Differences Table</h3><table><tr><th>Step</th>";
+            for (let i = 0; i < numPoints; i++) {
+                tableHTML += `<th>${i + 1}</th>`;
+            }
+            tableHTML += "</tr>";
+            for (let i = 0; i < numPoints; i++) {
+                tableHTML += `<tr><td>${i + 1}</td>`;
+                for (let j = 0; j <= i; j++) {
+                    tableHTML += `<td>${dividedDifferences[i][j].toFixed(2)}</td>`;
+                }
+                tableHTML += "</tr>";
+            }
+            tableHTML += "</table>";
+            document.getElementById("resultTableContainer").innerHTML = tableHTML;
+
+            // สร้าง Polynomial
+            let polynomial = `${dividedDifferences[0][0].toFixed(2)}`;
+            let term = "";
+            for (let i = 1; i < numPoints; i++) {
+                term += `(x - ${xValues[i - 1].toFixed(2)})`;
+                polynomial += ` + ${dividedDifferences[0][i].toFixed(2)}${term}`;
+            }
+            document.getElementById("polynomial").innerText = `Polynomial: ${polynomial}`;
+
+            // สร้างข้อมูลสำหรับกราฟ
+            const interpolatedPoints = [];
+            const step = (Math.max(...xValues) - Math.min(...xValues)) / 100;
+            for (let x = Math.min(...xValues); x <= Math.max(...xValues); x += step) {
+                let y = dividedDifferences[0][0];
+                let prod = 1;
+                for (let i = 1; i < numPoints; i++) {
+                    prod *= (x - xValues[i - 1]);
+                    y += dividedDifferences[0][i] * prod;
+                }
+                interpolatedPoints.push({ x, y });
+            }
+
+            // แสดงกราฟ
+            const ctx = document.getElementById("chartCanvas").getContext("2d");
+            if (chart) {
+                chart.destroy(); // ทำลายกราฟเก่าเพื่ออัปเดตใหม่
+            }
+            chart = new Chart(ctx, {
+                type: "line",
+                data: {
+                    datasets: [
+                        {
+                            label: "Interpolated Polynomial",
+                            data: interpolatedPoints.map(p => ({ x: p.x, y: p.y })),
+                            borderColor: "pink",
+                            backgroundColor: "rgba(0,0,255,0.1)",
+                            showLine: true,
+                            fill: false,
+                            borderWidth: 2,
+                            tension: 0.4, // เพิ่มความโค้งให้กราฟ
+                        },
+                        {
+                            label: "Data Points",
+                            data: xValues.map((x, i) => ({ x, y: yValues[i] })),
+                            borderColor: "red",
+                            backgroundColor: "red",
+                            pointRadius: 5,
+                            showLine: false,
+                        },
+                    ],
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { type: "linear", position: "bottom" },
+                        y: { type: "linear" },
+                    },
+                },
+            });
+        }
+
+        // เริ่มต้นด้วยการสร้างฟิลด์อินพุตสำหรับจุดข้อมูลเริ่มต้น
+        createInputFields();
+    </script>
+</body>
+</html>

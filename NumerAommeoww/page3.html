@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Newton Raphson Method</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <h1>Newton Raphson Method</h1>
+    <script>
+        // ฟังก์ชันที่เราต้องการหาค่าราก
+        function f(x) {
+            return x * x - 4; // ตัวอย่างฟังก์ชัน f(x) = x^2 - 4
+        }
+
+        // ฟังก์ชันที่คำนวณอนุพันธ์ของฟังก์ชัน
+        function fPrime(x) {
+            return 2 * x; // อนุพันธ์ f'(x) = 2x
+        }
+
+        // ฟังก์ชัน Newton-Raphson
+        function newtonRaphson(initialGuess, tolerance, maxIterations) {
+            let x0 = initialGuess;
+            let iteration = 0;
+
+            while (iteration < maxIterations) {
+                let x1 = x0 - f(x0) / fPrime(x0); // สูตร Newton-Raphson
+
+                // เช็คความแม่นยำ
+                if (Math.abs(x1 - x0) < tolerance) {
+                    return x1; // คืนค่าผลลัพธ์
+                }
+
+                x0 = x1;
+                iteration++;
+            }
+
+            return null; // ถ้าไม่พบราก
+        }
+
+        // ฟังก์ชันเพื่อให้ผู้ใช้กรอกข้อมูล
+        function calculate() {
+            const initialGuess = parseFloat(document.getElementById('initialGuess').value);
+            const tolerance = parseFloat(document.getElementById('tolerance').value);
+            const maxIterations = parseInt(document.getElementById('maxIterations').value);
+
+            const result = newtonRaphson(initialGuess, tolerance, maxIterations);
+
+            if (result !== null) {
+                document.getElementById('result').innerText = `Root: ${result}`;
+            } else {
+                document.getElementById('result').innerText = 'Unable to find the root value in the specified number of rounds.';
+            }
+        }
+
+        // เพิ่มสไตล์เล็กน้อย
+        window.onload = function() {
+            document.body.innerHTML = `
+                <h1>Newton Raphson Method Calculator</h1>
+                <label for="initialGuess">Estimation:</label>
+                <input type="number" id="initialGuess" required><br><br>
+                
+                <label for="tolerance">Tolerance:</label>
+                <input type="number" id="tolerance" step="0.0001" required><br><br>
+                
+                <label for="maxIterations">MaxIteration:</label>
+                <input type="number" id="maxIterations" required><br><br>
+                
+                <button onclick="calculate()">Calculate</button>
+                
+                <h2 id="result"></h2>
+            `;
+        };
+          
+    </script>
+    
+</body>
+</html>

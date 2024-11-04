@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Linear Regression</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+        }
+        table {
+            margin: 20px 0;
+            border-collapse: collapse;
+            width: 100%;
+        }
+        table, th, td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: center;
+        }
+        #chartContainer {
+            width: 700px; /* ความกว้างของกราฟ */
+            height: 400px; /* ความสูงของกราฟ */
+            margin-top: 20px;
+        }
+        canvas {
+            max-width: 100%;
+            max-height: 100%;
+        }
+    </style>
+</head>
+<body>
+    <h1>Linear Regression</h1>
+
+    <label for="numPoints">Data Point:</label>
+    <input type="number" id="numPoints" min="2" value="3" onchange="createInputFields()">
+    
+    <div id="pointsContainer">
+        <h3>Complete x and y:</h3>
+        <table id="pointsTable"></table>
+    </div>
+
+    <button onclick="calculateLinearRegression()">Calculate</button>
+    
+    <h2 id="equation"></h2>
+
+    <div id="chartContainer">
+        <canvas id="chartCanvas"></canvas>
+    </div>
+
+    <script>
+        let chart; // ตัวแปรสำหรับเก็บ Chart.js instance
+
+        function createInputFields() {
+            const numPoints = parseInt(document.getElementById("numPoints").value);
+            const pointsTable = document.getElementById("pointsTable");
+            pointsTable.innerHTML = "<tr><th>x</th><th>y</th></tr>";
+            for (let i = 0; i < numPoints; i++) {
+                pointsTable.innerHTML += `
+                    <tr>
+                        <td><input type="number" id="x${i}" required></td>
+                        <td><input type="number" id="y${i}" required></td>
+                    </tr>
+                `;
+            }
+        }
+
+        function calculateLinearRegression() {
+            const numPoints = parseInt(document.getElementById("numPoints").value);
+            const xValues = [];
+            const yValues = [];
+
+            for (let i = 0; i < numPoints; i++) {
+                xValues.push(parseFloat(document.getElementById(`x${i}`).value));
+                yValues.push(parseFloat(document.getElementById(`y${i}`).value));
+            }
+
+            // คำนวณค่าเฉลี่ย
+            const xMean = xValues.reduce((a, b) => a + b, 0) / numPoints;
+            const yMean = yValues.reduce((a, b) => a + b, 0) / numPoints;
+
+            // คำนวณค่า slope (m) และ intercept (b)
+            let numerator = 0;
+            let denominator = 0;
+            for (let i = 0; i < numPoints; i++) {
+                numerator += (xValues[i] - xMean) * (yValues[i] - yMean);
+                denominator += (xValues[i] - xMean) ** 2;
+            }
+            const slope = numerator / denominator;
+            const intercept = yMean - slope * xMean;
+
+            // แสดงสมการ
+            document.getElementById("equation").innerText = `Equation: y = ${slope.toFixed(2)}x + ${intercept.toFixed(2)}`;
+
+            // สร้างข้อมูลสำหรับกราฟ
+            const linePoints = [];
+            const xMin = Math.min(...xValues);
+            const xMax = Math.max(...xValues);
+            for (let x = xMin; x <= xMax; x += (xMax - xMin) / 100) {
+                const y = slope * x + intercept;
+                linePoints.push({ x, y });
+            }
+
+            // แสดงกราฟ
+            const ctx = document.getElementById("chartCanvas").getContext("2d");
+            if (chart) {
+                chart.destroy(); // ทำลายกราฟเก่าเพื่ออัปเดตใหม่
+            }
+            chart = new Chart(ctx, {
+                type: "line",
+                data: {
+                    datasets: [
+                        {
+                            label: "Regression Line",
+                            data: linePoints,
+                            borderColor: "pink",
+                            backgroundColor: "rgba(0,0,255,0.1)",
+                            showLine: true,
+                            fill: false,
+                            borderWidth: 2,
+                            tension: 0.4, // เพิ่มความโค้งให้กราฟ
+                        },
+                        {
+                            label: "Data Points",
+                            data: xValues.map((x, i) => ({ x, y: yValues[i] })),
+                            borderColor: "red",
+                            backgroundColor: "red",
+                            pointRadius: 5,
+                            showLine: false,
+                        },
+                    ],
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { type: "linear", position: "bottom" },
+                        y: { type: "linear" },
+                    },
+                },
+            });
+        }
+
+        // เริ่มต้นด้วยการสร้างฟิลด์อินพุตสำหรับจุดข้อมูลเริ่มต้น
+        createInputFields();
+    </script>
+</body>
+</html>

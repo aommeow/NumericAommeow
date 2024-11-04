@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cramer's Rule Calculator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+        }
+        table {
+            margin: 20px 0;
+            border-collapse: collapse;
+        }
+        table, th, td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>Cramer's Rule Calculator</h1>
+
+    <label for="matrixSize">Please select a matrix:</label>
+    <select id="matrixSize" onchange="changeMatrixSize()">
+        <option value="2">2x2</option>
+        <option value="3">3x3</option>
+        <option value="4">4x4</option>
+        <option value="5">5x5</option>
+    </select>
+
+    <div id="matrixContainer">
+        <h3>Complete the system of linear equations (Ax = B)</h3>
+        <table id="matrixTable"></table>
+    </div>
+
+    <button onclick="calculate()">Calculate</button>
+    
+    <h2 id="result"></h2>
+
+    <script>
+        function changeMatrixSize() {
+            const size = parseInt(document.getElementById('matrixSize').value);
+            const matrixTable = document.getElementById('matrixTable');
+            matrixTable.innerHTML = ''; // ล้างตารางก่อน
+            let tableHTML = '<tr><th colspan="' + size + '">A Matrix</th><th>B</th></tr>';
+            for (let i = 0; i < size; i++) {
+                tableHTML += '<tr>';
+                for (let j = 0; j < size; j++) {
+                    tableHTML += `<td><input type="number" required id="A${i}${j}"></td>`;
+                }
+                tableHTML += `<td><input type="number" required id="B${i}"></td>`;
+                tableHTML += '</tr>';
+            }
+            matrixTable.innerHTML = tableHTML;
+        }
+
+        // ฟังก์ชันสำหรับการคำนวณผลลัพธ์โดยใช้ Cramer's Rule
+        function cramerRule(size) {
+            const A = [];
+            const B = [];
+
+            // เก็บค่าจากฟิลด์ input
+            for (let i = 0; i < size; i++) {
+                A[i] = [];
+                for (let j = 0; j < size; j++) {
+                    A[i][j] = parseFloat(document.getElementById(`A${i}${j}`).value);
+                }
+                B[i] = parseFloat(document.getElementById(`B${i}`).value);
+            }
+
+            // คำนวณดีเทอร์มิแนนต์ D
+            const D = determinant(A, size);
+            if (D === 0) {
+                return null; // ระบบสมการไม่มีคำตอบหรือมีคำตอบไม่จำกัด
+            }
+
+            // คำนวณค่า x
+            const x = [];
+            for (let i = 0; i < size; i++) {
+                const tempMatrix = JSON.parse(JSON.stringify(A)); // สร้างสำเนาของ A
+                for (let j = 0; j < size; j++) {
+                    tempMatrix[j][i] = B[j]; // แทนค่าคอลัมน์ i ด้วย B
+                }
+                x[i] = determinant(tempMatrix, size) / D; // คำนวณค่า x[i]
+            }
+
+            return x; // คืนค่าคำตอบ
+        }
+
+        // ฟังก์ชันสำหรับการคำนวณดีเทอร์มิแนนต์
+        function determinant(matrix, n) {
+            if (n === 1) return matrix[0][0];
+            if (n === 2) return matrix[0][0] * matrix[1][1] - matrix[0][1] * matrix[1][0];
+
+            let det = 0;
+            for (let f = 0; f < n; f++) {
+                let temp = [];
+                for (let i = 1; i < n; i++) {
+                    temp[i - 1] = [];
+                    for (let j = 0; j < n; j++) {
+                        if (j !== f) {
+                            temp[i - 1].push(matrix[i][j]);
+                        }
+                    }
+                }
+                det += Math.pow(-1, f) * matrix[0][f] * determinant(temp, n - 1);
+            }
+            return det;
+        }
+
+        // ฟังก์ชันเพื่อให้ผู้ใช้กรอกข้อมูลและคำนวณผลลัพธ์
+        function calculate() {
+            const size = parseInt(document.getElementById('matrixSize').value);
+            const result = cramerRule(size);
+
+            if (result !== null) {
+                let resultText = 'คำตอบ: ';
+                if (size === 2) {
+                    resultText += `x = ${result[0].toFixed(2)}, y = ${result[1].toFixed(2)}`;
+                } else {
+                    for (let i = 0; i < result.length; i++) {
+                        resultText += `x${i + 1} = ${result[i].toFixed(2)}; `;
+                    }
+                }
+                document.getElementById('result').innerText = resultText;
+            } else {
+                document.getElementById('result').innerText = 'A system of equations has no solutions.';
+            }
+        }
+
+        // เริ่มต้นด้วยระบบสมการขนาด 2x2
+        changeMatrixSize();
+    </script>
+</body>
+</html>

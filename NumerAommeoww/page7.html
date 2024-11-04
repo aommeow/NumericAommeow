@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gauss-Jordan Method Calculator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+        }
+        table {
+            margin: 20px 0;
+            border-collapse: collapse;
+        }
+        table, th, td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>Gauss-Jordan Method Calculator</h1>
+
+    <label for="matrixSize">Please select a matrix:</label>
+    <select id="matrixSize" onchange="changeMatrixSize()">
+        <option value="2">2x2</option>
+        <option value="3">3x3</option>
+        <option value="4">4x4</option>
+        <option value="5">5x5</option>
+    </select>
+
+    <div id="matrixContainer">
+        <h3>Complete the system of linear equations (Ax = B)</h3>
+        <table id="matrixTable"></table>
+    </div>
+
+    <button onclick="calculate()">Calculate</button>
+    
+    <h2 id="result"></h2>
+
+    <script>
+        function changeMatrixSize() {
+            const size = parseInt(document.getElementById('matrixSize').value);
+            const matrixTable = document.getElementById('matrixTable');
+            matrixTable.innerHTML = ''; // ล้างตารางก่อน
+            let tableHTML = '<tr><th colspan="' + size + '">A Matrix</th><th>B</th></tr>';
+            for (let i = 0; i < size; i++) {
+                tableHTML += '<tr>';
+                for (let j = 0; j < size; j++) {
+                    tableHTML += `<td><input type="number" required id="A${i}${j}"></td>`;
+                }
+                tableHTML += `<td><input type="number" required id="B${i}"></td>`;
+                tableHTML += '</tr>';
+            }
+            matrixTable.innerHTML = tableHTML;
+        }
+
+        // ฟังก์ชันสำหรับการคำนวณผลลัพธ์โดยใช้ Gauss-Jordan Method
+        function gaussJordan(size) {
+            const A = [];
+
+            // เก็บค่าจากฟิลด์ input
+            for (let i = 0; i < size; i++) {
+                A[i] = [];
+                for (let j = 0; j < size; j++) {
+                    A[i][j] = parseFloat(document.getElementById(`A${i}${j}`).value);
+                }
+                A[i][size] = parseFloat(document.getElementById(`B${i}`).value);
+            }
+
+            // ใช้ Gauss-Jordan Method ในการคำนวณ
+            for (let i = 0; i < size; i++) {
+                // ทำให้ตัวแปรหลักเป็น 1
+                let pivot = A[i][i];
+                if (pivot === 0) return null; // หาก pivot = 0 ไม่สามารถแก้ได้ด้วย Gauss-Jordan
+                for (let j = 0; j <= size; j++) {
+                    A[i][j] /= pivot;
+                }
+
+                // ทำให้ค่าของคอลัมน์อื่นเป็น 0
+                for (let k = 0; k < size; k++) {
+                    if (k !== i) {
+                        let factor = A[k][i];
+                        for (let j = 0; j <= size; j++) {
+                            A[k][j] -= factor * A[i][j];
+                        }
+                    }
+                }
+            }
+
+            // ดึงค่า x จากผลลัพธ์
+            const x = [];
+            for (let i = 0; i < size; i++) {
+                x[i] = A[i][size];
+            }
+
+            return x; // คืนค่าคำตอบ
+        }
+
+        // ฟังก์ชันเพื่อให้ผู้ใช้กรอกข้อมูลและคำนวณผลลัพธ์
+        function calculate() {
+            const size = parseInt(document.getElementById('matrixSize').value);
+            const result = gaussJordan(size);
+
+            if (result !== null) {
+                let resultText = 'Result: ';
+                if (size === 2) {
+                    resultText += `x = ${result[0].toFixed(2)}, y = ${result[1].toFixed(2)}`;
+                } else if (size === 3) {
+                    resultText += `x = ${result[0].toFixed(2)}, y = ${result[1].toFixed(2)}, z = ${result[2].toFixed(2)}`;
+                } else {
+                    for (let i = 0; i < result.length; i++) {
+                        resultText += `x${i + 1} = ${result[i].toFixed(2)}; `;
+                    }
+                }
+                document.getElementById('result').innerText = resultText;
+            } else {
+                document.getElementById('result').innerText = 'A system of equations has no solutions.';
+            }
+        }
+
+        // เริ่มต้นด้วยระบบสมการขนาด 2x2
+        changeMatrixSize();
+    </script>
+</body>
+</html>

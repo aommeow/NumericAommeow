@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>One Point Iteration Method</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <h1>One Point Iteration Method Calculator</h1>
+    <label for="x0">Starting Point X0:</label>
+    <input type="number" id="x0" required><br><br>
+    
+    <label for="tolerance">Tolerance:</label>
+    <input type="number" id="tolerance" step="0.0001" required><br><br>
+    
+    <label for="maxIterations">MaxIteration:</label>
+    <input type="number" id="maxIterations" required><br><br>
+    
+    <label for="functionInput">Function g(x) (Ex. x^2 - 4 => Math.sqrt(4)):</label>
+    <input type="text" id="functionInput" required><br><br>
+    
+    <button onclick="calculate()">Calculate</button>
+    
+    <h2 id="result"></h2>
+
+    <script>
+        // ฟังก์ชันสำหรับการคำนวณค่า g(x)
+        function evaluateFunction(g, x) {
+            return eval(g.replace(/x/g, x)); // ใช้ eval เพื่อประเมินค่าฟังก์ชัน g(x)
+        }
+
+        // ฟังก์ชัน One Point Iteration Method
+        function onePointIteration(g, x0, tolerance, maxIterations) {
+            let iteration = 0;
+            let x1 = x0;
+
+            while (iteration < maxIterations) {
+                // คำนวณค่าใหม่
+                x1 = evaluateFunction(g, x0);
+
+                // เช็คว่าความแตกต่างระหว่าง x0 และ x1 น้อยกว่าความแม่นยำที่ต้องการหรือไม่
+                if (Math.abs(x1 - x0) < tolerance) {
+                    return x1; // คืนค่ารากที่ค้นพบ
+                }
+
+                // อัพเดทค่า x0
+                x0 = x1;
+                iteration++;
+            }
+
+            return x1; // คืนค่าที่สุดท้ายหากถึงจำนวนรอบสูงสุด
+        }
+
+        // ฟังก์ชันเพื่อให้ผู้ใช้กรอกข้อมูลและคำนวณผลลัพธ์
+        function calculate() {
+            const x0 = parseFloat(document.getElementById('x0').value);
+            const tolerance = parseFloat(document.getElementById('tolerance').value);
+            const maxIterations = parseInt(document.getElementById('maxIterations').value);
+            const g = document.getElementById('functionInput').value;
+
+            const result = onePointIteration(g, x0, tolerance, maxIterations);
+
+            document.getElementById('result').innerText = `Root: ${result}`;
+        }
+    </script>
+</body>
+</html>
